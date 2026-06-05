@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPC Retreat Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f0;
+    color: #1a2e1a;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #2d5a1b;
+    color: white;
+    padding: 16px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.25rem; font-weight: 700; }
+  header p { font-size: 0.78rem; opacity: 0.8; margin-top: 2px; }
+
+  .unit-toggle {
+    display: flex;
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .unit-toggle button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 9px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #666;
+    transition: all 0.2s;
+  }
+  .unit-toggle button.active {
+    background: #2d5a1b;
+    color: white;
+    box-shadow: 0 2px 6px rgba(45,90,27,0.3);
+  }
+
+  .main { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  .card-header {
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-header.green { background: #3d7a24; color: white; }
+  .card-header.blue  { background: #1a5276; color: white; }
+  .card-header.gray  { background: #555; color: white; }
+
+  .field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 10px;
+  }
+  .field:last-child { border-bottom: none; }
+  .field label { font-size: 0.88rem; color: #333; flex: 1; line-height: 1.3; }
+  .field label .sub { font-size: 0.75rem; color: #888; display: block; }
+
+  input[type="number"] {
+    padding: 8px 10px;
+    border: 1.5px solid #c8e6c9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    text-align: right;
+    background: #f9fff9;
+    outline: none;
+    -moz-appearance: textfield;
+    width: 110px;
+  }
+  input[type="number"]:focus {
+    border-color: #2d5a1b;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(45,90,27,0.1);
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"].highlight {
+    border-color: #f0c040;
+    background: #fffef0;
+  }
+  input[type="number"].highlight:focus {
+    border-color: #c8a000;
+    box-shadow: 0 0 0 3px rgba(200,160,0,0.15);
+  }
+
+  .toggle-group {
+    display: flex;
+    gap: 6px;
+  }
+  .toggle-group button {
+    padding: 8px 14px;
+    border: 1.5px solid #c8e6c9;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #f9fff9;
+    color: #555;
+    transition: all 0.15s;
+  }
+  .toggle-group button.active {
+    background: #2d5a1b;
+    border-color: #2d5a1b;
+    color: white;
+  }
+
+  /* 2-col input row inside a card */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .two-col:last-child { border-bottom: none; }
+  .two-col .tc-field {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .two-col .tc-field:first-child { border-right: 1px solid #f0f0f0; }
+  .two-col .tc-field label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .two-col .tc-field input {
+    width: 100%;
+  }
+
+  /* "Add 2nd completed" toggle row */
+  .add-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f9f9f9;
+    cursor: pointer;
+    border-top: 1px solid #eee;
+    gap: 10px;
+  }
+  .add-row span { font-size: 0.85rem; color: #555; }
+  .add-row .pill {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .add-row .pill.off { background: #e0e0e0; color: #666; }
+  .add-row .pill.on  { background: #2d5a1b; color: white; }
+
+  /* Result rows */
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .r-label { font-size: 0.84rem; color: #444; flex: 1; line-height: 1.3; }
+  .result-row .r-value {
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #1a5276;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  /* Big rate card */
+  .big-result {
+    background: linear-gradient(135deg, #1a5276, #2471a3);
+    border-radius: 14px;
+    padding: 22px 20px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(26,82,118,0.3);
+  }
+  .big-result .br-app {
+    font-size: 0.75rem;
+    opacity: 0.75;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+  .big-result .br-label {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .big-result .br-value {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.05;
+    margin: 4px 0;
+  }
+  .big-result .br-sub { font-size: 0.82rem; opacity: 0.72; }
+
+  /* Alerts */
+  .alert {
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    display: none;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .alert.visible { display: flex; }
+  .alert.warn { background: #fff3cd; border: 1.5px solid #ffc107; color: #856404; }
+  .alert.err  { background: #fdecea; border: 1.5px solid #e74c3c; color: #c0392b; }
+  .alert .icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  /* App label badge */
+  .app-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.25);
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+  }
+
+  footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #aaa; }
+
+  @media (max-width: 380px) {
+    input[type="number"] { width: 88px; }
+    .big-result .br-value { font-size: 2.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🥔 CIPC Retreat Calculator</h1>
+  <p>Sprouting Inhibitor Rate Calculator</p>
+</header>
+
+<div class="unit-toggle">
+  <button id="btn-cwt" class="active" onclick="setUnit('cwt')">CWT (hundredweight)</button>
+  <button id="btn-tons" onclick="setUnit('tons')">Tons</button>
+</div>
+
+<div class="main">
+
+  <!-- Alerts -->
+  <div class="alert err" id="err-temp">
+    <span class="icon">🚫</span><span>Invalid: 55°F+ is for Processor type only</span>
+  </div>
+  <div class="alert warn" id="warn-cap">
+    <span class="icon">⚠️</span><span>Required active exceeds max allowed — capping at maximum</span>
+  </div>
+
+  <!-- Setup -->
+  <div class="card">
+    <div class="card-header green">Setup</div>
+    <div class="field">
+      <label>Holding Temperature (°F)<span class="sub">Round up</span></label>
+      <input type="number" id="temp" value="50" oninput="calc()">
+    </div>
+    <div class="field">
+      <label>Potato Type</label>
+      <div class="toggle-group">
+        <button id="type-fresh" class="active" onclick="setType('Fresh')">Fresh</button>
+        <button id="type-proc" onclick="setType('Processor')">Processor</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Months to be Held</label>
+      <input type="number" id="months" value="11" oninput="calc()">
+    </div>
+    <div class="field">
+      <label>Standard Rate<span class="sub" id="std-sub">1 or 2 lb active / 600 cwt</span></label>
+      <div class="toggle-group">
+        <button id="rate-1" onclick="setStdRate(1)">1 lb</button>
+        <button id="rate-2" class="active" onclick="setStdRate(2)">2 lb</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1st Application (always done) -->
+  <div class="card">
+    <div class="card-header gray">
+      1st Application
+      <span class="app-badge">Already Done</span>
+    </div>
+    <div class="two-col">
+      <div class="tc-field">
+        <label id="lbl-d2">CWT Treated</label>
+        <input type="number" id="d2" value="135000" oninput="calc()">
+      </div>
+      <div class="tc-field">
+        <label>Rate Used (1:___)</label>
+        <input type="number" id="e2" value="400" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Calculation Target -->
+  <!-- MODE A: Calculating 2nd Application -->
+  <div id="section-calc-2nd">
+    <div class="card">
+      <div class="card-header green">
+        2nd Application — Retreat
+        <span class="app-badge">Calculating</span>
+      </div>
+      <div class="field">
+        <label id="lbl-pile-2nd-main">Pile CWT<span class="sub" id="lbl-pile-2nd">CWT to be treated</span></label>
+        <input type="number" id="d3-calc" class="highlight" placeholder="Enter pile" oninput="sync('d3-calc','d3-done'); calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE B: 2nd app already done, calculating 3rd -->
+  <div id="section-2nd-done" style="display:none;">
+    <div class="card">
+      <div class="card-header gray">
+        2nd Application — Retreat
+        <span class="app-badge">Already Done</span>
+      </div>
+      <div class="two-col">
+        <div class="tc-field">
+          <label id="lbl-d3">CWT Treated</label>
+          <input type="number" id="d3-done" oninput="sync('d3-done','d3-calc'); calc()">
+        </div>
+        <div class="tc-field">
+          <label>Rate Used (1:___)</label>
+          <input type="number" id="e3" placeholder="Enter rate" oninput="calc()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header green">
+        3rd Application
+        <span class="app-badge">Calculating</span>
+      </div>
+      <div class="field">
+        <label id="lbl-pile-3rd-main">Pile CWT<span class="sub" id="lbl-pile-3rd">CWT to be treated</span></label>
+        <input type="number" id="d4" class="highlight" placeholder="Enter pile" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle: 2nd app already completed? -->
+  <div class="card">
+    <div class="add-row" onclick="toggleMode()">
+      <span id="add-row-label">2nd application already completed?</span>
+      <button class="pill off" id="mode-pill">Add 3rd →</button>
+    </div>
+  </div>
+
+  <!-- Big Rate + Total Product -->
+  <div class="big-result">
+    <div class="br-app" id="br-app-label">Retreat (2nd Application)</div>
+    <div class="br-label">Highest Available Rate</div>
+    <div class="br-value">1 : <span id="r-rate">—</span></div>
+    <div class="br-sub" id="r-rate-sub">Enter pile size above to calculate</div>
+    <div style="margin-top:16px; background:rgba(255,255,255,0.12); border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:0.85rem; opacity:0.85;">Total Product Needed</span>
+      <span style="font-size:1.1rem; font-weight:800;" id="r-total-prod">—</span>
+    </div>
+  </div>
+
+</div>
+
+<footer>CIPC Retreat Calculator · For field use only</footer>
+
+<script>
+  let unit = 'cwt';
+  let potatoType = 'Fresh';
+  let stdRate = 2;
+  let mode = 2; // 2 = calculating 2nd app, 3 = calculating 3rd app
+
+  function setUnit(u) {
+    unit = u;
+    document.getElementById('btn-cwt').classList.toggle('active', u === 'cwt');
+    document.getElementById('btn-tons').classList.toggle('active', u === 'tons');
+    const perUnit = u === 'cwt' ? '600 cwt' : '30 tons';
+    const short = u === 'cwt' ? 'CWT' : 'Tons';
+    document.getElementById('std-sub').textContent = `1 or 2 lb active / ${perUnit}`;
+    document.getElementById('lbl-d2').textContent = `${short} Treated`;
+    document.getElementById('lbl-d3').textContent = `${short} Treated`;
+    const pileLabel = u === 'cwt' ? 'Pile CWT' : 'Pile Tons';
+    document.getElementById('lbl-pile-2nd-main').childNodes[0].textContent = pileLabel;
+    document.getElementById('lbl-pile-3rd-main').childNodes[0].textContent = pileLabel;
+    document.getElementById('lbl-pile-2nd').textContent = `${short} to be treated`;
+    document.getElementById('lbl-pile-3rd').textContent = `${short} to be treated`;
+    calc();
+  }
+
+  function setType(t) {
+    potatoType = t;
+    document.getElementById('type-fresh').classList.toggle('active', t === 'Fresh');
+    document.getElementById('type-proc').classList.toggle('active', t === 'Processor');
+    calc();
+  }
+
+  function setStdRate(r) {
+    stdRate = r;
+    document.getElementById('rate-1').classList.toggle('active', r === 1);
+    document.getElementById('rate-2').classList.toggle('active', r === 2);
+    calc();
+  }
+
+  function toggleMode() {
+    mode = mode === 2 ? 3 : 2;
+    const is3 = mode === 3;
+    document.getElementById('section-calc-2nd').style.display = is3 ? 'none' : 'block';
+    document.getElementById('section-2nd-done').style.display = is3 ? 'block' : 'none';
+    document.getElementById('mode-pill').textContent = is3 ? '← Remove 3rd' : 'Add 3rd →';
+    document.getElementById('mode-pill').className = is3 ? 'pill on' : 'pill off';
+    document.getElementById('add-row-label').textContent = is3
+      ? '3rd application added'
+      : '2nd application already completed?';
+    document.getElementById('br-app-label').textContent = is3
+      ? '3rd Application'
+      : 'Retreat (2nd Application)';
+    calc();
+  }
+
+  // Keep the two pile-size inputs in sync (d3-calc and d3-done share same D3 value)
+  function sync(fromId, toId) {
+    document.getElementById(toId).value = document.getElementById(fromId).value;
+  }
+
+  function v(id) {
+    const n = parseFloat(document.getElementById(id).value);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function fmt(n, dec) {
+    if (n === null || isNaN(n)) return '—';
+    return n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+
+  function calc() {
+    const temp   = v('temp');
+    const months = v('months');
+    const D2     = v('d2');
+    const E2     = v('e2');
+    const D3     = mode === 2 ? v('d3-calc') : v('d3-done');
+    const E3     = mode === 2 ? 0 : v('e3');
+    const D4     = mode === 3 ? v('d4') : 0;
+
+    const divisor  = unit === 'cwt' ? 400 : 20;
+    const unitSize = unit === 'cwt' ? 600 : 30;
+
+    // Current pile being calculated
+    const currentPile = mode === 3 ? D4 : D3;
+
+    // Validate temp+type
+    const errTemp = temp >= 55 && potatoType === 'Fresh';
+    document.getElementById('err-temp').classList.toggle('visible', errTemp);
+
+    // Lbs of product applied per application
+    const F2 = E2 > 0 ? D2 / E2 : 0;
+    const F3 = E3 > 0 ? D3 / E3 : 0;
+
+    // Total product currently in pile
+    // Adjustment = product removed as pile shrank from D2 → current pile
+    const refPile = mode === 3 ? currentPile : D3;
+    const F7 = (F2 + F3) - (D2 - refPile) / divisor;
+
+    // B6: already-used active ingredient per unit
+    const B6 = currentPile > 0 ? ((F7 / currentPile) * unitSize) * 0.98 : 0;
+
+    // % of standard
+    const B11 = (2 * temp) + (5 * months - 5);
+    const B12 = (B11 / 100) * stdRate;
+    const B13 = potatoType === 'Fresh' ? 2.9 : 3.3;
+
+    const capped = B12 > B13;
+    document.getElementById('warn-cap').classList.toggle('visible', capped && !errTemp);
+
+    const B14 = Math.max(0, Math.min(B12, B13) - B6);
+    const B15 = B14 / 0.98;
+    const B19 = B14 * (currentPile / unitSize);
+    const B20 = B15 * (currentPile / unitSize);
+    const B21 = B20 > 0 ? currentPile / B20 : null;
+
+    // Update total product display
+    document.getElementById('r-total-prod').textContent = currentPile > 0 ? fmt(B20, 1) + ' lb' : '—';
+
+    // Big rate display
+    if (currentPile <= 0) {
+      document.getElementById('r-rate').textContent = '—';
+      document.getElementById('r-rate-sub').textContent = `Enter Pile ${unit === 'cwt' ? 'CWT' : 'Tons'} above to calculate`;
+    } else if (B14 <= 0) {
+      document.getElementById('r-rate').textContent = '✓';
+      document.getElementById('r-rate-sub').textContent = 'Max treatment reached — no more product needed';
+    } else {
+      document.getElementById('r-rate').textContent = fmt(B21, 0);
+      document.getElementById('r-rate-sub').textContent =
+        `Apply 1 lb product per ${fmt(B21, 0)} ${unit === 'cwt' ? 'cwt' : 'tons'}`;
+    }
+  }
+
+  calc();
+</script>
+</body>
+</html>
