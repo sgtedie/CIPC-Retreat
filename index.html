@@ -488,17 +488,13 @@
     const errTemp = temp >= 55 && potatoType === 'Fresh';
     document.getElementById('err-temp').classList.toggle('visible', errTemp);
 
-    // Lbs of product applied per application
-    const F2 = E2 > 0 ? D2 / E2 : 0;
-    const F3 = E3 > 0 ? D3 / E3 : 0;
-
-    // Total product currently in pile
-    // Adjustment = product removed as pile shrank from D2 → current pile
-    const refPile = mode === 3 ? currentPile : D3;
-    const F7 = (F2 + F3) - (D2 - refPile) / divisor;
-
-    // B6: already-used active ingredient per unit
-    const B6 = currentPile > 0 ? ((F7 / currentPile) * unitSize) * 0.98 : 0;
+    // Already-used active ingredient per unit (lb active / unitSize cwt or tons)
+    // Concentration = sum of (1/rate) for each completed application × unitSize × 0.98
+    // This is independent of pile size — only the rates matter
+    const prevRates = mode === 3
+      ? (E2 > 0 ? 1/E2 : 0) + (E3 > 0 ? 1/E3 : 0)
+      : (E2 > 0 ? 1/E2 : 0);
+    const B6 = prevRates * unitSize * 0.98;
 
     // % of standard
     const B11 = (2 * temp) + (5 * months - 5);
